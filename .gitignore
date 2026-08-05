@@ -1,0 +1,8 @@
+# archives / local backups — these would otherwise be published with the site
+*.zip
+
+# OS / editor cruft
+Thumbs.db
+desktop.ini
+.DS_Store
+.vscode/

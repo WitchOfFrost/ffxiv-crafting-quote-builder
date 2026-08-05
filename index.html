@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FFXIV Crafting Quote Builder</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <h1>FFXIV Crafting Quote Builder</h1>
+  <div class="topbar-tools">
+    <span class="setups">
+      <select id="setupSelect" title="Load a saved setup"><option value="">Saved setups…</option></select>
+      <button id="saveSetupBtn" class="ghost">Save</button>
+      <button id="deleteSetupBtn" class="ghost" disabled>Delete</button>
+      <button id="exportJsonBtn" class="ghost">Export JSON</button>
+      <button id="importJsonBtn" class="ghost">Import JSON</button>
+      <input type="file" id="importFile" accept="application/json,.json" hidden>
+    </span>
+    <label class="dc">
+      Datacenter
+      <select id="dcSelect"><option>loading…</option></select>
+    </label>
+  </div>
+</header>
+
+<main>
+
+  <!-- ============ REFERENCE SIDE ============ -->
+  <section class="panel" id="referencePanel">
+    <div class="panel-head">
+      <h2>Reference <span class="muted">— recipes &amp; market prices (not exported)</span></h2>
+    </div>
+
+    <div class="searchbar">
+      <div class="autocomplete">
+        <input id="itemSearch" type="text" placeholder="Search an item, e.g. “Grade 8 Tincture of Mind”" autocomplete="off">
+        <ul id="suggestions" class="suggestions" hidden></ul>
+      </div>
+      <input id="itemQty" type="number" min="1" value="1" title="Quantity to craft">
+      <button id="addItemBtn" class="primary">Add to craft list</button>
+    </div>
+
+    <div class="craftlist-head">
+      <span id="craftStatus" class="muted">No items yet.</span>
+      <span class="craftlist-buttons">
+        <button id="collapseAllBtn" class="ghost">Collapse all</button>
+        <button id="clearCraftBtn" class="ghost">Clear list</button>
+      </span>
+    </div>
+
+    <div id="craftList" class="craftlist"></div>
+
+    <div class="ref-total">
+      <div class="total-row">
+        <span>Buy the listed items outright <small>(top level, off the market board)</small></span>
+        <strong id="refBuyTotal">0 gil</strong>
+      </div>
+      <div class="total-row">
+        <span>Cheapest material cost <small>(craft everything yourself)</small></span>
+        <strong id="refTotal">0 gil</strong>
+      </div>
+      <div id="refPartial" class="partial" hidden>* incomplete — some items have no listing on this datacenter</div>
+    </div>
+    <details id="specialSection" class="special">
+      <summary>Special-source materials <span id="specialSummary" class="muted"></span></summary>
+      <div id="specialBody"></div>
+      <p class="hint">Items that cannot be gathered, crafted or bought from a gil vendor — tomestone
+        and scrip purchases, aethersand reduction, drops, tribal quests and the like. The customer can
+        often supply these themselves, which is why they are tallied separately per crafted item.</p>
+    </details>
+
+    <p class="hint">Prices are the cheapest active listing on the selected datacenter (Universalis). Precrafts are expanded recursively; the material total counts only <em>base</em> materials (leaf nodes).</p>
+  </section>
+
+  <!-- ============ QUOTE SIDE ============ -->
+  <section class="panel" id="quotePanel">
+    <div class="panel-head">
+      <h2>Quote</h2>
+      <div class="quote-actions">
+        <button id="addRowBtn" class="ghost">+ Row</button>
+        <button id="fillFromCraftBtn" class="ghost">Fill from craft list</button>
+        <button id="exportBtn" class="primary">Export PNG</button>
+      </div>
+    </div>
+
+    <div class="quote-meta">
+      <input id="quoteTitle" type="text" value="Crafting Quote" placeholder="Title">
+      <input id="quoteFor" type="text" placeholder="For (customer name)">
+      <input id="quoteBy" type="text" placeholder="From (your character)">
+      <input id="quoteDate" type="text" placeholder="Date">
+    </div>
+
+    <table class="quote-table">
+      <thead>
+        <tr><th class="c-pos">Pos</th><th>Description</th><th class="c-price">Price (gil)</th><th class="c-del"></th></tr>
+      </thead>
+      <tbody id="quoteBody"></tbody>
+      <tfoot>
+        <tr><td></td><td class="ta-right">Total</td><td id="quoteTotal" class="ta-right">0</td><td></td></tr>
+      </tfoot>
+    </table>
+
+    <label class="note-label">Notes
+      <textarea id="quoteNotes" rows="3" placeholder="Materials provided by customer / delivery on Chaos / …"></textarea>
+    </label>
+  </section>
+</main>
+
+<footer class="sitefoot">
+  <span>FFXIV Crafting Quote Builder — © 2026 WitchOfFrost,
+    <a href="LICENSE">MIT licensed</a>.</span>
+  <span>Item data from <a href="https://v2.xivapi.com/" target="_blank" rel="noopener">XIVAPI</a>,
+    market data from <a href="https://universalis.app/" target="_blank" rel="noopener">Universalis</a>.
+    Not affiliated with Square Enix. FINAL FANTASY XIV © SQUARE ENIX CO., LTD.</span>
+</footer>
+
+<canvas id="exportCanvas" hidden></canvas>
+
+<!-- classic scripts, loaded in dependency order (works from file:// too) -->
+<script src="js/core.js"></script>
+<script src="js/api.js"></script>
+<script src="js/craftlist.js"></script>
+<script src="js/quote.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/export.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
