@@ -1,25 +1,27 @@
 /* All network access: XIVAPI v2 (items + recipes) and Universalis (prices). */
 
-const recipeCache = new Map();   // itemId -> recipe | null
+const recipeCache = new Map(); // itemId -> recipe | null
 
 /* ---------------- XIVAPI: item search ---------------- */
 async function searchItems(term) {
-  const q = term.replace(/["\\]/g, ' ').trim();
+  const q = term.replace(/["\\]/g, " ").trim();
   if (!q) return [];
-  const url = `${XIVAPI}/search?sheets=Item&query=Name~"${encodeURIComponent(q)}"`
-            + `&fields=Name,Icon&limit=50`;
+  const url =
+    `${XIVAPI}/search?sheets=Item&query=Name~"${encodeURIComponent(q)}"` +
+    `&fields=Name,Icon&limit=50`;
   const data = await getJSON(url);
   return (data.results || [])
-    .filter(r => r.fields && r.fields.Name)
-    .map(r => ({ id: r.row_id, name: r.fields.Name, icon: r.fields.Icon }));
+    .filter((r) => r.fields && r.fields.Name)
+    .map((r) => ({ id: r.row_id, name: r.fields.Name, icon: r.fields.Icon }));
 }
 
 /* ---------------- XIVAPI: recipe for a result item ---------------- */
 async function getRecipe(itemId) {
   if (recipeCache.has(itemId)) return recipeCache.get(itemId);
 
-  const url = `${XIVAPI}/search?sheets=Recipe&query=ItemResult=${itemId}`
-            + `&fields=AmountResult,AmountIngredient,Ingredient[].Name,Ingredient[].Icon,CraftType.Name&limit=1`;
+  const url =
+    `${XIVAPI}/search?sheets=Recipe&query=ItemResult=${itemId}` +
+    `&fields=AmountResult,AmountIngredient,Ingredient[].Name,Ingredient[].Icon,CraftType.Name&limit=1`;
   let recipe = null;
   try {
     const data = await getJSON(url);
@@ -40,12 +42,13 @@ async function getRecipe(itemId) {
       });
       recipe = {
         yield: f.AmountResult || 1,
-        craftType: (f.CraftType && f.CraftType.fields && f.CraftType.fields.Name) || '',
+        craftType:
+          (f.CraftType && f.CraftType.fields && f.CraftType.fields.Name) || "",
         ingredients,
       };
     }
   } catch (e) {
-    console.warn('recipe lookup failed for', itemId, e);
+    console.warn("recipe lookup failed for", itemId, e);
   }
 
   recipeCache.set(itemId, recipe);
@@ -61,14 +64,20 @@ async function getRecipe(itemId) {
    drops, beast tribes, treasure maps …) is something the customer has to
    procure by other means, which is exactly what we want to list.          */
 
-const SOURCE_SHEETS = 'GatheringItem,FishParameter,SpearfishingItem,GilShopItem';
-const GATHER_SHEETS = new Set(['GatheringItem', 'FishParameter', 'SpearfishingItem']);
-const sourceCache = new Map();   // itemId -> {gathered, vendor}
+const SOURCE_SHEETS =
+  "GatheringItem,FishParameter,SpearfishingItem,GilShopItem";
+const GATHER_SHEETS = new Set([
+  "GatheringItem",
+  "FishParameter",
+  "SpearfishingItem",
+]);
+const sourceCache = new Map(); // itemId -> {gathered, vendor}
 
 async function searchSourceChunk(ids, limit = 100) {
-  const query = ids.map(id => `Item=${id}`).join(' ');   // space = OR
-  const url = `${XIVAPI}/search?sheets=${SOURCE_SHEETS}`
-            + `&query=${encodeURIComponent(query)}&fields=Item%40as(raw)&limit=${limit}`;
+  const query = ids.map((id) => `Item=${id}`).join(" "); // space = OR
+  const url =
+    `${XIVAPI}/search?sheets=${SOURCE_SHEETS}` +
+    `&query=${encodeURIComponent(query)}&fields=Item%40as(raw)&limit=${limit}`;
   const data = await getJSON(url);
   const results = data.results || [];
 
@@ -91,71 +100,82 @@ async function fetchSources(ids) {
     const chunk = ids.slice(i, i + CHUNK);
     try {
       const results = await searchSourceChunk(chunk);
-      const found = new Map(chunk.map(id => [id, { gathered: false, vendor: false }]));
+      const found = new Map(
+        chunk.map((id) => [id, { gathered: false, vendor: false }]),
+      );
       for (const r of results) {
-        const id = r.fields && r.fields['Item@as(raw)'];
+        const id = r.fields && r.fields["Item@as(raw)"];
         const entry = found.get(id);
         if (!entry) continue;
         if (GATHER_SHEETS.has(r.sheet)) entry.gathered = true;
-        else if (r.sheet === 'GilShopItem') entry.vendor = true;
+        else if (r.sheet === "GilShopItem") entry.vendor = true;
       }
       found.forEach((v, id) => sourceCache.set(id, v));
     } catch (e) {
       // leave uncached so it is retried rather than mislabelled as special
-      console.warn('source lookup failed', e);
+      console.warn("source lookup failed", e);
     }
   }
 }
 
 /* ---------------- Universalis: cheapest listing on the DC ---------------- */
 const PRICE_FIELDS = [
-  'items.itemID',
-  'items.listings.pricePerUnit',
-  'items.listings.quantity',
-  'items.listings.hq',
-  'items.listings.worldName',
-].join(',');
+  "items.itemID",
+  "items.listings.pricePerUnit",
+  "items.listings.quantity",
+  "items.listings.hq",
+  "items.listings.worldName",
+].join(",");
 
 /* The whole listing book is fetched — both qualities in one request — so a
    quantity can be priced properly and HQ/NQ switched without a refetch. */
 async function fetchPrices(ids) {
   for (let i = 0; i < ids.length; i += PRICE_CHUNK) {
     const chunk = ids.slice(i, i + PRICE_CHUNK);
-    const url = `${UNIVERSALIS}/${encodeURIComponent(state.dc)}/${chunk.join(',')}`
-              + `?listings=${LISTING_DEPTH}&entries=0&fields=${encodeURIComponent(PRICE_FIELDS)}`;
+    const url =
+      `${UNIVERSALIS}/${encodeURIComponent(state.dc)}/${chunk.join(",")}` +
+      `?listings=${LISTING_DEPTH}&entries=0&fields=${encodeURIComponent(PRICE_FIELDS)}`;
     try {
       const data = await getJSON(url);
       // A single-id request returns the item object itself instead of {items:{…}}.
       const items = data.items || { [data.itemID]: data };
       for (const id of chunk) {
         const it = items[id];
-        const listings = ((it && it.listings) || []).map(l => ({
-          ppu: l.pricePerUnit,
-          qty: l.quantity,
-          hq: !!l.hq,
-          world: l.worldName || '',
-        })).sort((a, b) => a.ppu - b.ppu);
+        const listings = ((it && it.listings) || [])
+          .map((l) => ({
+            ppu: l.pricePerUnit,
+            qty: l.quantity,
+            hq: !!l.hq,
+            world: l.worldName || "",
+          }))
+          .sort((a, b) => a.ppu - b.ppu);
         state.prices.set(id, listings.length ? { listings } : null);
       }
     } catch (e) {
-      console.warn('price lookup failed', e);
-      chunk.forEach(id => { if (!state.prices.has(id)) state.prices.set(id, null); });
+      console.warn("price lookup failed", e);
+      chunk.forEach((id) => {
+        if (!state.prices.has(id)) state.prices.set(id, null);
+      });
     }
   }
 }
 
 /* ---------------- XIVAPI: can an item exist in HQ at all? ---------------- */
-const hqCache = new Map();   // itemId -> bool
+const hqCache = new Map(); // itemId -> bool
 
 async function fetchHqFlags(ids) {
-  const missing = ids.filter(id => !hqCache.has(id));
+  const missing = ids.filter((id) => !hqCache.has(id));
   for (let i = 0; i < missing.length; i += PRICE_CHUNK) {
     const chunk = missing.slice(i, i + PRICE_CHUNK);
     try {
-      const data = await getJSON(`${XIVAPI}/sheet/Item?rows=${chunk.join(',')}&fields=CanBeHq`);
-      (data.rows || []).forEach(r => hqCache.set(r.row_id, !!(r.fields && r.fields.CanBeHq)));
+      const data = await getJSON(
+        `${XIVAPI}/sheet/Item?rows=${chunk.join(",")}&fields=CanBeHq`,
+      );
+      (data.rows || []).forEach((r) =>
+        hqCache.set(r.row_id, !!(r.fields && r.fields.CanBeHq)),
+      );
     } catch (e) {
-      console.warn('HQ flag lookup failed', e);
+      console.warn("HQ flag lookup failed", e);
     }
   }
 }
@@ -163,5 +183,7 @@ async function fetchHqFlags(ids) {
 /* ---------------- Universalis: datacenter list ---------------- */
 async function fetchDatacenters() {
   const dcs = await getJSON(`${UNIVERSALIS}/data-centers`);
-  return dcs.sort((a, b) => a.region.localeCompare(b.region) || a.name.localeCompare(b.name));
+  return dcs.sort(
+    (a, b) => a.region.localeCompare(b.region) || a.name.localeCompare(b.name),
+  );
 }

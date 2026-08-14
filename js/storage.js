@@ -1,52 +1,65 @@
 /* Persistence: autosaved session, named setups in localStorage, JSON import/export. */
 
-const SESSION_KEY = 'cqb.session';
-const SETUPS_KEY = 'cqb.setups';
+const SESSION_KEY = "cqb.session";
+const SETUPS_KEY = "cqb.setups";
 
 /* ---------------- (de)serialisation ---------------- */
 function serialize() {
   return {
-    format: 'ffxiv-crafting-quote',
+    format: "ffxiv-crafting-quote",
     version: 1,
     savedAt: new Date().toISOString(),
     dc: state.dc,
     // only the seed items are stored — trees are rebuilt from the live recipes
-    items: state.roots.map(r => ({
-      id: r.item.id, name: r.item.name, icon: r.item.icon, qty: r.qty, hq: r.hq !== false,
+    items: state.roots.map((r) => ({
+      id: r.item.id,
+      name: r.item.name,
+      icon: r.item.icon,
+      qty: r.qty,
+      hq: r.hq !== false,
     })),
-    quote: state.quote.map(q => ({ desc: q.desc, price: q.price, qty: q.qty })),
+    quote: state.quote.map((q) => ({
+      desc: q.desc,
+      price: q.price,
+      qty: q.qty,
+    })),
     meta: {
-      title: $('#quoteTitle').value,
-      for: $('#quoteFor').value,
-      by: $('#quoteBy').value,
-      date: $('#quoteDate').value,
-      notes: $('#quoteNotes').value,
+      title: $("#quoteTitle").value,
+      for: $("#quoteFor").value,
+      by: $("#quoteBy").value,
+      date: $("#quoteDate").value,
+      notes: $("#quoteNotes").value,
     },
   };
 }
 
 async function applyConfig(cfg) {
-  if (!cfg || typeof cfg !== 'object') throw new Error('not a valid setup file');
+  if (!cfg || typeof cfg !== "object")
+    throw new Error("not a valid setup file");
 
   if (cfg.dc) {
     state.dc = cfg.dc;
-    localStorage.setItem('cqb.dc', state.dc);
-    const sel = $('#dcSelect');
-    if (sel && [...sel.options].some(o => o.value === cfg.dc)) sel.value = cfg.dc;
+    localStorage.setItem("cqb.dc", state.dc);
+    const sel = $("#dcSelect");
+    if (sel && [...sel.options].some((o) => o.value === cfg.dc))
+      sel.value = cfg.dc;
     state.prices.clear();
   }
 
   const m = cfg.meta || {};
-  if (m.title !== undefined) $('#quoteTitle').value = m.title;
-  if (m.for !== undefined) $('#quoteFor').value = m.for;
-  if (m.by !== undefined) $('#quoteBy').value = m.by;
-  if (m.date !== undefined) $('#quoteDate').value = m.date;
-  if (m.notes !== undefined) $('#quoteNotes').value = m.notes;
+  if (m.title !== undefined) $("#quoteTitle").value = m.title;
+  if (m.for !== undefined) $("#quoteFor").value = m.for;
+  if (m.by !== undefined) $("#quoteBy").value = m.by;
+  if (m.date !== undefined) $("#quoteDate").value = m.date;
+  if (m.notes !== undefined) $("#quoteNotes").value = m.notes;
 
-  state.quote = (cfg.quote || []).map(q => ({
-    desc: q.desc || '',
-    price: q.price === '' || q.price === null || q.price === undefined ? '' : Number(q.price),
-    qty: Math.max(1, Number(q.qty) || 1),   // setups saved before quantities existed default to 1
+  state.quote = (cfg.quote || []).map((q) => ({
+    desc: q.desc || "",
+    price:
+      q.price === "" || q.price === null || q.price === undefined
+        ? ""
+        : Number(q.price),
+    qty: Math.max(1, Number(q.qty) || 1), // setups saved before quantities existed default to 1
   }));
   renderQuote();
 
@@ -67,8 +80,11 @@ let saveTimer = null;
 function saveSession() {
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
-    try { localStorage.setItem(SESSION_KEY, JSON.stringify(serialize())); }
-    catch (e) { console.warn('session save failed', e); }
+    try {
+      localStorage.setItem(SESSION_KEY, JSON.stringify(serialize()));
+    } catch (e) {
+      console.warn("session save failed", e);
+    }
   }, 300);
 }
 
@@ -79,15 +95,18 @@ async function restoreSession() {
     await applyConfig(JSON.parse(raw));
     return true;
   } catch (e) {
-    console.warn('session restore failed', e);
+    console.warn("session restore failed", e);
     return false;
   }
 }
 
 /* ---------------- named setups ---------------- */
 function loadSetups() {
-  try { return JSON.parse(localStorage.getItem(SETUPS_KEY)) || {}; }
-  catch { return {}; }
+  try {
+    return JSON.parse(localStorage.getItem(SETUPS_KEY)) || {};
+  } catch {
+    return {};
+  }
 }
 
 function writeSetups(setups) {
@@ -99,7 +118,7 @@ function saveSetup(name) {
   const setups = loadSetups();
   setups[name] = serialize();
   writeSetups(setups);
-  $('#setupSelect').value = name;
+  $("#setupSelect").value = name;
   toast(`Saved “${name}”.`);
 }
 
@@ -112,33 +131,36 @@ function deleteSetup(name) {
 }
 
 function renderSetupList() {
-  const sel = $('#setupSelect');
+  const sel = $("#setupSelect");
   const current = sel.value;
   const names = Object.keys(loadSetups()).sort((a, b) => a.localeCompare(b));
   sel.innerHTML = '<option value="">Saved setups…</option>';
-  names.forEach(n => {
-    const o = document.createElement('option');
+  names.forEach((n) => {
+    const o = document.createElement("option");
     o.value = n;
     o.textContent = n;
     sel.appendChild(o);
   });
   if (names.includes(current)) sel.value = current;
-  $('#deleteSetupBtn').disabled = !sel.value;
+  $("#deleteSetupBtn").disabled = !sel.value;
 }
 
 /* ---------------- JSON file import / export ---------------- */
 function exportJSON() {
   const cfg = serialize();
-  const name = ($('#setupSelect').value || $('#quoteTitle').value || 'quote')
-    .replace(/[^\w\-]+/g, '_').toLowerCase();
-  const blob = new Blob([JSON.stringify(cfg, null, 2)], { type: 'application/json' });
+  const name = ($("#setupSelect").value || $("#quoteTitle").value || "quote")
+    .replace(/[^\w\-]+/g, "_")
+    .toLowerCase();
+  const blob = new Blob([JSON.stringify(cfg, null, 2)], {
+    type: "application/json",
+  });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
+  const a = document.createElement("a");
   a.href = url;
-  a.download = `${name || 'quote'}.json`;
+  a.download = `${name || "quote"}.json`;
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 5000);
-  toast('JSON exported.');
+  toast("JSON exported.");
 }
 
 async function importJSONFile(file) {
@@ -146,9 +168,9 @@ async function importJSONFile(file) {
     const cfg = JSON.parse(await file.text());
     await applyConfig(cfg);
     saveSession();
-    toast('Setup imported.');
+    toast("Setup imported.");
   } catch (e) {
     console.error(e);
-    toast('Import failed: ' + e.message);
+    toast("Import failed: " + e.message);
   }
 }

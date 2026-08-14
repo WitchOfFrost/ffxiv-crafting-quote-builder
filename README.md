@@ -56,8 +56,12 @@ If the site ever moves to a different repo name or a custom domain, update the a
 
 - `googlee7cc0fe994c7987a.html` is the Google Search Console verification file and must stay at the
   repository root, untouched.
-- `robots.txt` allows all crawlers and points at `sitemap.xml`; submit that sitemap in Search Console
-  once the site is verified.
+- Submit `sitemap.xml` in Search Console (the URL-prefix property prefills the site path). If it
+  reports "could not be fetched" with an empty "last read", the usual cause is that it was submitted
+  before the Pages deployment finished — resubmit once the file is live and it will be read.
+- `robots.txt` is only honoured at the host root (`witchoffrost.github.io/robots.txt`), which belongs
+  to a user-site repo that does not exist here. The copy in this repo is therefore informational; no
+  robots.txt at all means "crawl everything", so the sitemap submission above is what matters.
 - `assets/og-image.png` (1200×630) is the link preview image, regenerated only if the branding changes.
 
 All asset paths are relative, so the app works from a project subpath without configuration.

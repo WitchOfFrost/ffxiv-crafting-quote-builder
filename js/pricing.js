@@ -11,7 +11,8 @@
 function fillFrom(listings, needed) {
   let remaining = needed;
   let total = 0;
-  let from = null, to = null;
+  let from = null,
+    to = null;
   const worlds = new Set();
 
   for (const l of listings) {
@@ -30,7 +31,7 @@ function canBeHq(id) {
   const cached = hqCache.get(id);
   if (cached !== undefined) return cached;
   const book = state.prices.get(id);
-  return book ? book.listings.some(l => l.hq) : false;   // fall back to evidence
+  return book ? book.listings.some((l) => l.hq) : false; // fall back to evidence
 }
 
 /**
@@ -39,42 +40,48 @@ function canBeHq(id) {
  * when HQ cannot cover the amount (or the item has no HQ at all).
  * Returns null when the item has no listings whatsoever.
  */
-function costFor(id, needed, mode = 'auto') {
+function costFor(id, needed, mode = "auto") {
   const book = state.prices.get(id);
   if (!book || !book.listings.length) return null;
 
-  const hq = book.listings.filter(l => l.hq);
-  const nq = book.listings.filter(l => !l.hq);
+  const hq = book.listings.filter((l) => l.hq);
+  const nq = book.listings.filter((l) => !l.hq);
 
   const build = (listings, quality) => {
     const r = fillFrom(listings, needed);
     return { ...r, quality, needed, short: r.filled < needed };
   };
 
-  if (mode === 'hq') return build(hq, 'HQ');
-  if (mode === 'nq') return build(nq, 'NQ');
+  if (mode === "hq") return build(hq, "HQ");
+  if (mode === "nq") return build(nq, "NQ");
 
   // auto: HQ when it can actually cover the requirement
   if (canBeHq(id) && hq.length) {
-    const h = build(hq, 'HQ');
+    const h = build(hq, "HQ");
     if (!h.short) return h;
-    const n = build(nq, 'NQ');
+    const n = build(nq, "NQ");
     if (!n.short) return n;
-    return h.total >= n.total ? h : n;      // both short — show the better fill
+    return h.total >= n.total ? h : n; // both short — show the better fill
   }
-  return build(nq.length ? nq : book.listings, canBeHq(id) ? 'NQ' : '');
+  return build(nq.length ? nq : book.listings, canBeHq(id) ? "NQ" : "");
 }
 
 /** The quality a root item is quoted at — NQ-only items ignore the flag. */
 function rootMode(root) {
-  if (!canBeHq(root.tree.id)) return 'nq';
-  return root.hq ? 'hq' : 'nq';
+  if (!canBeHq(root.tree.id)) return "nq";
+  return root.hq ? "hq" : "nq";
 }
 
 /** Short human label for a cost result, e.g. "700 ea · Moogle". */
 function costDetail(cost) {
-  if (!cost || !cost.filled) return '';
-  const per = cost.from === cost.to ? gil(cost.from) : `${gil(cost.from)}–${gil(cost.to)}`;
-  const where = cost.worlds.length === 1 ? ' · ' + cost.worlds[0] : ` · ${cost.worlds.length} worlds`;
+  if (!cost || !cost.filled) return "";
+  const per =
+    cost.from === cost.to
+      ? gil(cost.from)
+      : `${gil(cost.from)}–${gil(cost.to)}`;
+  const where =
+    cost.worlds.length === 1
+      ? " · " + cost.worlds[0]
+      : ` · ${cost.worlds.length} worlds`;
   return `${per} ea${where}`;
 }
