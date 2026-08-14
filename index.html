@@ -4,6 +4,12 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
+    <!-- the app talks to these two hosts as soon as it boots -->
+    <link rel="preconnect" href="https://v2.xivapi.com" crossorigin />
+    <link rel="preconnect" href="https://universalis.app" crossorigin />
+    <link rel="dns-prefetch" href="https://v2.xivapi.com" />
+    <link rel="dns-prefetch" href="https://universalis.app" />
+
     <title>
       FFXIV Crafting Quote Builder — Recipe &amp; Market Price Calculator
     </title>
@@ -226,29 +232,29 @@
           <input id="quoteDate" type="text" placeholder="Date" />
         </div>
 
+        <div class="table-scroll">
         <table class="quote-table">
           <thead>
             <tr>
-              <th class="c-pos">Pos</th>
-              <th>Description</th>
-              <th class="c-qty">Qty</th>
-              <th class="c-price">Unit price</th>
-              <th class="c-amount">Amount (gil)</th>
-              <th class="c-del"></th>
+              <th scope="col" class="c-pos">Pos</th>
+              <th scope="col">Description</th>
+              <th scope="col" class="c-qty">Qty</th>
+              <th scope="col" class="c-price">Unit price</th>
+              <th scope="col" class="c-amount">Amount (gil)</th>
+              <th scope="col" class="c-del"><span class="sr-only">Remove row</span></th>
             </tr>
           </thead>
           <tbody id="quoteBody"></tbody>
           <tfoot>
             <tr>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td class="ta-right">Total</td>
+              <td colspan="3"></td>
+              <th scope="row" class="ta-right">Total</th>
               <td id="quoteTotal" class="ta-right">0</td>
               <td></td>
             </tr>
           </tfoot>
         </table>
+        </div>
 
         <label class="note-label"
           >Notes
@@ -343,13 +349,13 @@
     <canvas id="exportCanvas" hidden></canvas>
 
     <!-- classic scripts, loaded in dependency order (works from file:// too) -->
-    <script src="js/core.js"></script>
-    <script src="js/api.js"></script>
-    <script src="js/pricing.js"></script>
-    <script src="js/craftlist.js"></script>
-    <script src="js/quote.js"></script>
-    <script src="js/storage.js"></script>
-    <script src="js/export.js"></script>
-    <script src="js/app.js"></script>
+    <script src="js/core.js" defer></script>
+    <script src="js/api.js" defer></script>
+    <script src="js/pricing.js" defer></script>
+    <script src="js/craftlist.js" defer></script>
+    <script src="js/quote.js" defer></script>
+    <script src="js/storage.js" defer></script>
+    <script src="js/export.js" defer></script>
+    <script src="js/app.js" defer></script>
   </body>
 </html>

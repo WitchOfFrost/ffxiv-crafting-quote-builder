@@ -62,6 +62,9 @@ function renderSuggestions(items) {
     const img = document.createElement("img");
     img.src = iconUrl(it.icon);
     img.alt = "";
+    img.decoding = "async";
+    img.width = 24;
+    img.height = 24;
     const name = document.createElement("span");
     name.textContent = it.name;
     const tag = document.createElement("span");

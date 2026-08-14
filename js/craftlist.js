@@ -159,6 +159,9 @@ function nodeEl(node, isRoot, onRemove, rootUid) {
   img.src = iconUrl(node.icon);
   img.alt = "";
   img.loading = "lazy";
+  img.decoding = "async";
+  img.width = 24;
+  img.height = 24;
   row.appendChild(img);
 
   const name = document.createElement("span");
@@ -181,6 +184,7 @@ function nodeEl(node, isRoot, onRemove, rootUid) {
     input.type = "number";
     input.min = "1";
     input.value = node.qty;
+    input.setAttribute("aria-label", `Amount of ${node.name} to craft`);
     input.addEventListener("change", () => {
       const n = Math.max(1, parseInt(input.value, 10) || 1);
       input.value = n;
@@ -338,6 +342,9 @@ function specialRow(entry, indent) {
   img.src = iconUrl(entry.icon);
   img.alt = "";
   img.loading = "lazy";
+  img.decoding = "async";
+  img.width = 20;
+  img.height = 20;
 
   const name = document.createElement("span");
   name.className = "sp-name";

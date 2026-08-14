@@ -35,6 +35,7 @@ function renderQuote() {
     dIn.type = "text";
     dIn.value = row.desc;
     dIn.placeholder = "Description";
+    dIn.setAttribute("aria-label", `Position ${i + 1} description`);
     dIn.addEventListener("input", () => {
       row.desc = dIn.value;
       saveSession();
@@ -50,6 +51,7 @@ function renderQuote() {
     qIn.type = "number";
     qIn.className = "qty";
     qIn.min = "1";
+    qIn.setAttribute("aria-label", `Position ${i + 1} quantity`);
     qIn.value = row.qty;
     qIn.addEventListener("input", () => {
       const n = parseInt(qIn.value, 10);
@@ -75,6 +77,7 @@ function renderQuote() {
     pIn.className = "price";
     pIn.value = row.price === "" ? "" : gil(row.price);
     pIn.placeholder = "0";
+    pIn.setAttribute("aria-label", `Position ${i + 1} unit price`);
     pIn.addEventListener("input", () => {
       const n = parseInt(pIn.value.replace(/[^0-9]/g, ""), 10);
       row.price = Number.isFinite(n) ? n : "";
