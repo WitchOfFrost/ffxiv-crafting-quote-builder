@@ -20,6 +20,33 @@ No build step, no dependencies — plain HTML, CSS and JavaScript.
 - **Saved setups** in browser storage, plus JSON import/export
 - **PNG export** of the quote, including a market-board reference block
 
+## Build
+
+There is no build step for development — the source runs as-is. The deploy workflow does two
+things to the published copy only:
+
+1. minifies `css/*.css` and `js/*.js` with esbuild (no bundling, so the classic scripts keep
+   sharing their globals);
+2. runs `tools/inline-css.py`, which replaces the `<link ... data-inline>` tags in `index.html`
+   with `<style>` blocks.
+
+The CSS is under 3 KB gzipped, which is cheaper to inline than to fetch: it removes a
+render-blocking request and any layout shift from late-arriving styles. Loading the component
+sheet asynchronously instead was measured at CLS 0.60 versus 0 when inlined.
+
+## Caching
+
+GitHub Pages serves every file with a fixed `Cache-Control: max-age=600` and ignores `_headers`
+files, so the TTL cannot be raised from this repo. `sw.js` handles it client-side instead:
+
+- navigations are **network first** (a deploy is picked up immediately, and the app still opens
+  offline);
+- static files are **stale-while-revalidate** (served from cache, refreshed in the background);
+- XIVAPI and Universalis requests are never intercepted — prices must always be live.
+
+The cache name is stamped with the commit SHA at deploy time, so each deploy creates a fresh cache
+and old ones are deleted on activation. Nothing needs bumping by hand.
+
 ## Running locally
 
 Open `index.html` in a browser — the scripts are classic scripts, so `file://` works.
@@ -73,7 +100,9 @@ there is no server component and no API key.
 | Path               | Purpose                                              |
 | ------------------ | ---------------------------------------------------- |
 | `index.html`       | Markup for the reference and quote panels            |
-| `styles.css`       | Styling                                              |
+| `css/shell.css`    | Critical styles: reset, layout, top bar, form controls |
+| `css/components.css` | Craft list, quote table, special-source section, about, footer |
+| `tools/inline-css.py` | Deploy step that inlines both sheets into `index.html` |
 | `js/core.js`       | Shared state and helpers                             |
 | `js/api.js`        | XIVAPI (items, recipes, item sources) and Universalis |
 | `js/craftlist.js`  | Crafting tree, totals, special-source tally          |

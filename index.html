@@ -64,7 +64,10 @@
     />
 
     <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="styles.css" />
+    <!-- both sheets are inlined by the deploy workflow (data-inline);
+         together they are ~3 KB gzipped, cheaper inline than as requests -->
+    <link rel="stylesheet" href="css/shell.css" data-inline />
+    <link rel="stylesheet" href="css/components.css" data-inline />
 
     <script type="application/ld+json">
       {

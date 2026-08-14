@@ -27,6 +27,22 @@ jobs:
 
       - uses: actions/configure-pages@v5
 
+      # Source stays readable; only the published copy is minified.
+      # Top-level names are untouched (no bundling), so the classic scripts
+      # keep sharing their globals.
+      - name: Minify CSS and JS
+        run: |
+          npx --yes esbuild css/shell.css css/components.css \
+            --minify --outdir=css --allow-overwrite
+          npx --yes esbuild js/*.js --minify --outdir=js --allow-overwrite
+
+      - name: Inline CSS
+        run: python3 tools/inline-css.py
+
+      # a fresh cache name per deploy, so clients never keep stale assets
+      - name: Stamp service worker version
+        run: sed -i "s/__BUILD__/${GITHUB_SHA}/" sw.js
+
       # the app is plain HTML/CSS/JS — the repo root is published as-is
       - uses: actions/upload-pages-artifact@v3
         with:

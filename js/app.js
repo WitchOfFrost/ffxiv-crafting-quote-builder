@@ -276,4 +276,17 @@ async function init() {
   }
 }
 
+/* Repeat visits are served from the service worker cache — GitHub Pages'
+   fixed 10-minute TTL cannot be raised, so caching happens client-side.
+   Skipped on file:// where service workers are unavailable. */
+function registerServiceWorker() {
+  if (!("serviceWorker" in navigator) || location.protocol === "file:") return;
+  window.addEventListener("load", () => {
+    navigator.serviceWorker
+      .register("sw.js")
+      .catch((e) => console.warn("service worker registration failed", e));
+  });
+}
+
 document.addEventListener("DOMContentLoaded", init);
+registerServiceWorker();
