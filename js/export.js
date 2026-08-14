@@ -38,8 +38,10 @@ function exportPNG() {
 
   const colPos = PAD;
   const colDesc = PAD + 60;
-  const colPrice = W - PAD;
-  const descWidth = (W - PAD - 150) - colDesc;
+  const colAmount = W - PAD;           // right edge, line total
+  const colPrice = colAmount - 130;    // right edge, unit price
+  const colQty = colPrice - 120;       // right edge, quantity
+  const descWidth = (colQty - 60) - colDesc;
 
   /* ---- measure ---- */
   ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -47,7 +49,9 @@ function exportPNG() {
   const rows = state.quote.map((r, i) => ({
     pos: i + 1,
     lines: wrapText(ctx, r.desc || '—', descWidth),
+    qty: String(r.qty || 1),
     price: r.price === '' ? '—' : gil(r.price),
+    amount: r.price === '' ? '—' : gil(rowAmount(r)),
   }));
 
   // market-board reference: what the requested items would cost bought outright
@@ -123,7 +127,9 @@ function exportPNG() {
   ctx.fillText('POS', colPos, y + 20);
   ctx.fillText('DESCRIPTION', colDesc, y + 20);
   ctx.textAlign = 'right';
-  ctx.fillText('PRICE (GIL)', colPrice, y + 20);
+  ctx.fillText('QTY', colQty, y + 20);
+  ctx.fillText('UNIT PRICE', colPrice, y + 20);
+  ctx.fillText('AMOUNT (GIL)', colAmount, y + 20);
   y += 30;
 
   // rows
@@ -134,7 +140,9 @@ function exportPNG() {
     ctx.fillText(String(r.pos), colPos, y + LINE_H);
     r.lines.forEach((l, i) => ctx.fillText(l, colDesc, y + LINE_H + i * LINE_H));
     ctx.textAlign = 'right';
+    ctx.fillText(r.qty, colQty, y + LINE_H);
     ctx.fillText(r.price, colPrice, y + LINE_H);
+    ctx.fillText(r.amount, colAmount, y + LINE_H);
 
     y += r.lines.length * LINE_H + ROW_PAD;
     ctx.strokeStyle = C.line;
@@ -150,8 +158,8 @@ function exportPNG() {
   ctx.fillStyle = C.text;
   ctx.font = '700 16px "Segoe UI", sans-serif';
   ctx.textAlign = 'right';
-  ctx.fillText('Total', colPrice - 150, y);
-  ctx.fillText(gil(quoteTotal()) + ' gil', colPrice, y);
+  ctx.fillText('Total', colAmount - 150, y);
+  ctx.fillText(gil(quoteTotal()) + ' gil', colAmount, y);
   y += 14;
 
   /* market-board comparison — context for the customer, the quote should undercut it */
@@ -169,7 +177,7 @@ function exportPNG() {
       ctx.fillStyle = C.muted;
       ctx.fillText(ellipsize(ctx, r.label, descWidth), PAD, y + 14);
       ctx.textAlign = 'right';
-      ctx.fillText(r.price === null ? 'no listing' : gil(r.price) + ' gil', colPrice, y + 14);
+      ctx.fillText(r.price === null ? 'no listing' : gil(r.price) + ' gil', colAmount, y + 14);
       y += 20;
     });
 
@@ -185,8 +193,8 @@ function exportPNG() {
     ctx.fillStyle = C.text;
     ctx.font = '600 14px "Segoe UI", sans-serif';
     ctx.textAlign = 'right';
-    ctx.fillText('Market board total', colPrice - 150, y);
-    ctx.fillText(gil(mbTotal) + ' gil' + (mbPartial ? '*' : ''), colPrice, y);
+    ctx.fillText('Market board total', colAmount - 150, y);
+    ctx.fillText(gil(mbTotal) + ' gil' + (mbPartial ? '*' : ''), colAmount, y);
 
     if (mbPartial) {
       y += 16;

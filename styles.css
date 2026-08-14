@@ -216,11 +216,20 @@ button:disabled { opacity: .5; cursor: default; }
 }
 .quote-table td { padding: 3px 4px; border-bottom: 1px solid #262b38; }
 .quote-table .c-pos { width: 52px; }
-.quote-table .c-price { width: 130px; text-align: right; }
+.quote-table .c-qty { width: 68px; text-align: right; }
+.quote-table .c-price { width: 110px; text-align: right; }
+.quote-table .c-amount { width: 120px; text-align: right; }
 .quote-table .c-del { width: 32px; }
 .quote-table input { width: 100%; background: transparent; border: 1px solid transparent; }
 .quote-table input:hover { border-color: var(--line); }
-.quote-table input.price { text-align: right; font-variant-numeric: tabular-nums; }
+.quote-table input.price,
+.quote-table input.qty { text-align: right; font-variant-numeric: tabular-nums; }
+.quote-table td.amount {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  padding-right: 5px;
+  color: var(--text);
+}
 .quote-table tfoot td { padding-top: 8px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .ta-right { text-align: right; }
 .row-del { border: 0; background: none; color: var(--danger); }

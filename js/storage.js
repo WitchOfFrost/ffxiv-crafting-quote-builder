@@ -12,7 +12,7 @@ function serialize() {
     dc: state.dc,
     // only the seed items are stored — trees are rebuilt from the live recipes
     items: state.roots.map(r => ({ id: r.item.id, name: r.item.name, icon: r.item.icon, qty: r.qty })),
-    quote: state.quote.map(q => ({ desc: q.desc, price: q.price })),
+    quote: state.quote.map(q => ({ desc: q.desc, price: q.price, qty: q.qty })),
     meta: {
       title: $('#quoteTitle').value,
       for: $('#quoteFor').value,
@@ -44,6 +44,7 @@ async function applyConfig(cfg) {
   state.quote = (cfg.quote || []).map(q => ({
     desc: q.desc || '',
     price: q.price === '' || q.price === null || q.price === undefined ? '' : Number(q.price),
+    qty: Math.max(1, Number(q.qty) || 1),   // setups saved before quantities existed default to 1
   }));
   renderQuote();
 

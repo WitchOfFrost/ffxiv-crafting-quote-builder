@@ -1,15 +1,20 @@
 /* The quote side: an editable position / description / price table. */
 
+/** Price is per unit; the line amount is unit price × quantity. */
+function rowAmount(row) {
+  return (Number(row.price) || 0) * (Number(row.qty) || 0);
+}
+
 function quoteTotal() {
-  return state.quote.reduce((s, r) => s + (Number(r.price) || 0), 0);
+  return state.quote.reduce((s, r) => s + rowAmount(r), 0);
 }
 
 function updateQuoteTotal() {
   $('#quoteTotal').textContent = gil(quoteTotal());
 }
 
-function addQuoteRow(desc = '', price = '') {
-  state.quote.push({ desc, price });
+function addQuoteRow(desc = '', price = '', qty = 1) {
+  state.quote.push({ desc, price, qty });
   renderQuote();
   saveSession();
 }
@@ -34,6 +39,28 @@ function renderQuote() {
     desc.appendChild(dIn);
     tr.appendChild(desc);
 
+    const amount = document.createElement('td');
+    amount.className = 'amount';
+
+    const qty = document.createElement('td');
+    const qIn = document.createElement('input');
+    qIn.type = 'number';
+    qIn.className = 'qty';
+    qIn.min = '1';
+    qIn.value = row.qty;
+    qIn.addEventListener('input', () => {
+      const n = parseInt(qIn.value, 10);
+      row.qty = Number.isFinite(n) && n > 0 ? n : '';
+      amount.textContent = gil(rowAmount(row));
+      updateQuoteTotal();
+      saveSession();
+    });
+    qIn.addEventListener('blur', () => {
+      if (!row.qty) { row.qty = 1; qIn.value = 1; amount.textContent = gil(rowAmount(row)); updateQuoteTotal(); }
+    });
+    qty.appendChild(qIn);
+    tr.appendChild(qty);
+
     const price = document.createElement('td');
     const pIn = document.createElement('input');
     pIn.type = 'text';
@@ -43,12 +70,16 @@ function renderQuote() {
     pIn.addEventListener('input', () => {
       const n = parseInt(pIn.value.replace(/[^0-9]/g, ''), 10);
       row.price = Number.isFinite(n) ? n : '';
+      amount.textContent = gil(rowAmount(row));
       updateQuoteTotal();
       saveSession();
     });
     pIn.addEventListener('blur', () => { pIn.value = row.price === '' ? '' : gil(row.price); });
     price.appendChild(pIn);
     tr.appendChild(price);
+
+    amount.textContent = gil(rowAmount(row));
+    tr.appendChild(amount);
 
     const del = document.createElement('td');
     const btn = document.createElement('button');
@@ -69,8 +100,10 @@ function renderQuote() {
 function fillFromCraftList() {
   if (!state.roots.length) { toast('Craft list is empty.'); return; }
   state.roots.forEach(r => {
-    const desc = r.qty > 1 ? `${r.qty}× ${r.tree.name}` : r.tree.name;
-    if (!state.quote.some(q => q.desc === desc)) state.quote.push({ desc, price: '' });
+    const desc = r.tree.name;
+    const existing = state.quote.find(q => q.desc === desc);
+    if (existing) existing.qty = r.qty;                       // keep the amount in step
+    else state.quote.push({ desc, price: '', qty: r.qty });
   });
   renderQuote();
   saveSession();
