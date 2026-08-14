@@ -108,33 +108,54 @@ async function fetchSources(ids) {
 }
 
 /* ---------------- Universalis: cheapest listing on the DC ---------------- */
+const PRICE_FIELDS = [
+  'items.itemID',
+  'items.listings.pricePerUnit',
+  'items.listings.quantity',
+  'items.listings.hq',
+  'items.listings.worldName',
+].join(',');
+
+/* The whole listing book is fetched — both qualities in one request — so a
+   quantity can be priced properly and HQ/NQ switched without a refetch. */
 async function fetchPrices(ids) {
   for (let i = 0; i < ids.length; i += PRICE_CHUNK) {
     const chunk = ids.slice(i, i + PRICE_CHUNK);
-    const url = `${UNIVERSALIS}/${encodeURIComponent(state.dc)}/${chunk.join(',')}?listings=1&entries=0`;
+    const url = `${UNIVERSALIS}/${encodeURIComponent(state.dc)}/${chunk.join(',')}`
+              + `?listings=${LISTING_DEPTH}&entries=0&fields=${encodeURIComponent(PRICE_FIELDS)}`;
     try {
       const data = await getJSON(url);
       // A single-id request returns the item object itself instead of {items:{…}}.
       const items = data.items || { [data.itemID]: data };
       for (const id of chunk) {
         const it = items[id];
-        if (!it) { state.prices.set(id, null); continue; }
-        const cheapest = (it.listings || [])[0];
-        if (cheapest) {
-          state.prices.set(id, {
-            price: cheapest.pricePerUnit,
-            world: cheapest.worldName || '',
-            hq: !!cheapest.hq,
-          });
-        } else if (it.minPrice) {
-          state.prices.set(id, { price: it.minPrice, world: '', hq: false });
-        } else {
-          state.prices.set(id, null);   // untradable, or nothing on the market
-        }
+        const listings = ((it && it.listings) || []).map(l => ({
+          ppu: l.pricePerUnit,
+          qty: l.quantity,
+          hq: !!l.hq,
+          world: l.worldName || '',
+        })).sort((a, b) => a.ppu - b.ppu);
+        state.prices.set(id, listings.length ? { listings } : null);
       }
     } catch (e) {
       console.warn('price lookup failed', e);
       chunk.forEach(id => { if (!state.prices.has(id)) state.prices.set(id, null); });
+    }
+  }
+}
+
+/* ---------------- XIVAPI: can an item exist in HQ at all? ---------------- */
+const hqCache = new Map();   // itemId -> bool
+
+async function fetchHqFlags(ids) {
+  const missing = ids.filter(id => !hqCache.has(id));
+  for (let i = 0; i < missing.length; i += PRICE_CHUNK) {
+    const chunk = missing.slice(i, i + PRICE_CHUNK);
+    try {
+      const data = await getJSON(`${XIVAPI}/sheet/Item?rows=${chunk.join(',')}&fields=CanBeHq`);
+      (data.rows || []).forEach(r => hqCache.set(r.row_id, !!(r.fields && r.fields.CanBeHq)));
+    } catch (e) {
+      console.warn('HQ flag lookup failed', e);
     }
   }
 }

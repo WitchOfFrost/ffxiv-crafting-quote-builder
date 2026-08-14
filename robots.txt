@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://witchoffrost.github.io/ffxiv-crafting-quote-builder/sitemap.xml

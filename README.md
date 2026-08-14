@@ -47,7 +47,18 @@ push to `main`.
 
 2. In the repository, go to **Settings → Pages** and set **Source** to **GitHub Actions**.
 3. Push (or run the workflow manually from the Actions tab). The site appears at
-   `https://<user>.github.io/<repo>/`.
+   <https://witchoffrost.github.io/ffxiv-crafting-quote-builder/>.
+
+If the site ever moves to a different repo name or a custom domain, update the absolute URLs in
+`index.html` (canonical, `og:url`, `og:image`, JSON-LD), `sitemap.xml` and `robots.txt`.
+
+### Search engine setup
+
+- `googlee7cc0fe994c7987a.html` is the Google Search Console verification file and must stay at the
+  repository root, untouched.
+- `robots.txt` allows all crawlers and points at `sitemap.xml`; submit that sitemap in Search Console
+  once the site is verified.
+- `assets/og-image.png` (1200×630) is the link preview image, regenerated only if the branding changes.
 
 All asset paths are relative, so the app works from a project subpath without configuration.
 Both APIs are HTTPS and send permissive CORS headers, so they work directly from Pages —

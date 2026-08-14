@@ -11,7 +11,9 @@ function serialize() {
     savedAt: new Date().toISOString(),
     dc: state.dc,
     // only the seed items are stored — trees are rebuilt from the live recipes
-    items: state.roots.map(r => ({ id: r.item.id, name: r.item.name, icon: r.item.icon, qty: r.qty })),
+    items: state.roots.map(r => ({
+      id: r.item.id, name: r.item.name, icon: r.item.icon, qty: r.qty, hq: r.hq !== false,
+    })),
     quote: state.quote.map(q => ({ desc: q.desc, price: q.price, qty: q.qty })),
     meta: {
       title: $('#quoteTitle').value,
@@ -52,8 +54,9 @@ async function applyConfig(cfg) {
   renderCraftList();
   for (const it of cfg.items || []) {
     const item = { id: it.id, name: it.name, icon: it.icon };
-    const tree = await buildTree(item, Math.max(1, it.qty | 0 || 1));
-    state.roots.push({ uid: uid(), item, qty: Math.max(1, it.qty | 0 || 1), tree });
+    const qty = Math.max(1, it.qty | 0 || 1);
+    const tree = await buildTree(item, qty);
+    state.roots.push({ uid: uid(), item, qty, hq: it.hq !== false, tree });
   }
   await refreshPrices();
   renderCraftList();

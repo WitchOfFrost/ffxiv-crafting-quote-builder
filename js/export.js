@@ -56,14 +56,16 @@ function exportPNG() {
 
   // market-board reference: what the requested items would cost bought outright
   const mbRows = state.roots.map(r => {
-    const p = state.prices.get(r.tree.id);
+    const c = costFor(r.tree.id, r.qty, rootMode(r));
+    const quality = canBeHq(r.tree.id) ? (rootMode(r) === 'hq' ? ' (HQ)' : ' (NQ)') : '';
     return {
-      label: `${r.qty}× ${r.tree.name}`,
-      price: p ? p.price * r.qty : null,
+      label: `${r.qty}× ${r.tree.name}${quality}`,
+      price: c && c.filled ? c.total : null,
+      short: !!(c && c.short),
     };
   });
   const mbTotal = mbRows.reduce((s, r) => s + (r.price || 0), 0);
-  const mbPartial = mbRows.some(r => r.price === null);
+  const mbPartial = mbRows.some(r => r.price === null || r.short);
 
   let h = PAD + 34;                                    // title block
   if (forWho || byWho) h += 20;
@@ -177,7 +179,9 @@ function exportPNG() {
       ctx.fillStyle = C.muted;
       ctx.fillText(ellipsize(ctx, r.label, descWidth), PAD, y + 14);
       ctx.textAlign = 'right';
-      ctx.fillText(r.price === null ? 'no listing' : gil(r.price) + ' gil', colAmount, y + 14);
+      ctx.fillText(
+        r.price === null ? 'no listing' : gil(r.price) + ' gil' + (r.short ? '*' : ''),
+        colAmount, y + 14);
       y += 20;
     });
 
@@ -201,7 +205,7 @@ function exportPNG() {
       ctx.textAlign = 'left';
       ctx.fillStyle = C.muted;
       ctx.font = '11px "Segoe UI", sans-serif';
-      ctx.fillText('* some items had no active listing and are not counted', PAD, y);
+      ctx.fillText('* not enough listed on the datacenter to cover the full amount', PAD, y);
     }
   }
 

@@ -113,7 +113,7 @@ button:disabled { opacity: .5; cursor: default; }
   display: grid;
   /* last column is the root remove button — reserved on every row so the
      prices of roots and children line up and never touch the edge */
-  grid-template-columns: 22px 24px 1fr 62px auto 22px;
+  grid-template-columns: 22px 24px 1fr 62px auto 34px 22px;
   align-items: center;
   gap: 8px;
   padding: 5px 6px;
@@ -149,7 +149,32 @@ button:disabled { opacity: .5; cursor: default; }
 .node .price.none { color: var(--muted); }
 .node .twist { cursor: pointer; color: var(--muted); text-align: center; user-select: none; }
 .node .twist.leaf { cursor: default; opacity: .3; }
-.node .rm { grid-column: 6; border: 0; background: none; color: var(--danger); padding: 0; }
+.node .rm { grid-column: 7; border: 0; background: none; color: var(--danger); padding: 0; }
+
+/* HQ / NQ switch on the crafted result */
+.hq-toggle {
+  grid-column: 6;
+  padding: 1px 0;
+  width: 32px;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 4px;
+  color: var(--muted);
+}
+.hq-toggle.on { color: #f0c674; border-color: #f0c674; }
+.hq-toggle:hover { filter: brightness(1.2); }
+
+/* quality marker in front of a price */
+.price .q, .sp-price .q {
+  font-style: normal;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--muted);
+  margin-right: 2px;
+}
+.q.hq { color: #f0c674; }
+.q.nq { color: var(--muted); }
+.warn { color: var(--danger); }
 .children.collapsed { display: none; }
 .children { margin-left: 14px; border-left: 1px solid var(--line); padding-left: 6px; }
 .badge-craft { font-size: 10px; color: var(--accent-2); border: 1px solid var(--accent-2); border-radius: 3px; padding: 0 4px; margin-left: 6px; }
@@ -236,6 +261,28 @@ button:disabled { opacity: .5; cursor: default; }
 
 .note-label { display: block; margin-top: 12px; color: var(--muted); font-size: 12px; }
 .note-label textarea { width: 100%; margin-top: 4px; color: var(--text); resize: vertical; }
+
+.noscript-note {
+  margin: 0 16px 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--danger);
+  border-radius: 8px;
+  color: var(--text);
+}
+
+.about {
+  max-width: 900px;
+  margin: 8px auto 0;
+  padding: 0 20px 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.about h2 { font-size: 15px; color: var(--text); margin: 24px 0 8px; }
+.about h3 { font-size: 13px; color: var(--text); margin: 18px 0 6px; }
+.about p { margin: 0 0 10px; }
+.about ul { margin: 0 0 10px; padding-left: 18px; }
+.about li { margin-bottom: 5px; }
+.about strong { color: var(--text); font-weight: 600; }
 
 .sitefoot {
   display: flex;

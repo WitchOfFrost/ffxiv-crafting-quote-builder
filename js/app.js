@@ -107,7 +107,7 @@ async function addSelectedItem() {
   $('#craftStatus').textContent = `Loading recipe for ${item.name}…`;
   try {
     const tree = await buildTree(item, qty);
-    state.roots.push({ uid: uid(), item, qty, tree });
+    state.roots.push({ uid: uid(), item, qty, hq: true, tree });   // HQ unless toggled off
     await refreshPrices();
     renderCraftList();
     saveSession();

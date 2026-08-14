@@ -3,8 +3,61 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>FFXIV Crafting Quote Builder</title>
+
+<title>FFXIV Crafting Quote Builder — Recipe &amp; Market Price Calculator</title>
+<meta name="description" content="Free FFXIV crafting calculator: expand recipes and precrafts, price materials from live Universalis market data, compare HQ and NQ, export quotes as PNG.">
+<link rel="canonical" href="https://witchoffrost.github.io/ffxiv-crafting-quote-builder/">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="author" content="WitchOfFrost">
+<meta name="theme-color" content="#12141a">
+<meta name="color-scheme" content="dark">
+
+<!-- Open Graph / Twitter -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="FFXIV Crafting Quote Builder">
+<meta property="og:title" content="FFXIV Crafting Quote Builder — Recipe &amp; Market Price Calculator">
+<meta property="og:description" content="Expand FFXIV recipes and precrafts, price materials from live Universalis market data, compare HQ and NQ, and export a customer-ready quote as PNG.">
+<meta property="og:url" content="https://witchoffrost.github.io/ffxiv-crafting-quote-builder/">
+<meta property="og:image" content="https://witchoffrost.github.io/ffxiv-crafting-quote-builder/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="FFXIV Crafting Quote Builder — crafting tree with market prices next to a quote sheet">
+<meta property="og:locale" content="en_US">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="FFXIV Crafting Quote Builder">
+<meta name="twitter:description" content="Price FFXIV crafts from live market data and export a customer-ready quote as PNG.">
+<meta name="twitter:image" content="https://witchoffrost.github.io/ffxiv-crafting-quote-builder/assets/og-image.png">
+
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="styles.css">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "FFXIV Crafting Quote Builder",
+  "url": "https://witchoffrost.github.io/ffxiv-crafting-quote-builder/",
+  "applicationCategory": "UtilitiesApplication",
+  "applicationSubCategory": "Game utility",
+  "operatingSystem": "Any (web browser)",
+  "browserRequirements": "Requires JavaScript",
+  "description": "Crafting quote calculator for FINAL FANTASY XIV: expands recipes and precrafts, prices materials from Universalis market data per datacenter, distinguishes HQ and NQ, tallies materials that cannot be gathered, crafted or bought from a vendor, and exports the finished quote as a PNG.",
+  "inLanguage": "en",
+  "isAccessibleForFree": true,
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "author": { "@type": "Person", "name": "WitchOfFrost" },
+  "license": "https://opensource.org/licenses/MIT",
+  "featureList": [
+    "Recursive recipe and precraft expansion",
+    "Cheapest market board prices per datacenter from Universalis",
+    "Quantity-aware pricing across multiple listings",
+    "HQ and NQ price comparison",
+    "Special-source material tally (tomestones, scrips, aetherial reduction)",
+    "Editable quote table with quantities and unit prices",
+    "PNG export and JSON import/export"
+  ]
+}
+</script>
 </head>
 <body>
 
@@ -55,14 +108,14 @@
 
     <div class="ref-total">
       <div class="total-row">
-        <span>Buy the listed items outright <small>(top level, off the market board)</small></span>
+        <span>Buy the listed items outright <small>(top level, at the chosen quality)</small></span>
         <strong id="refBuyTotal">0 gil</strong>
       </div>
       <div class="total-row">
         <span>Cheapest material cost <small>(craft everything yourself)</small></span>
         <strong id="refTotal">0 gil</strong>
       </div>
-      <div id="refPartial" class="partial" hidden>* incomplete — some items have no listing on this datacenter</div>
+      <div id="refPartial" class="partial" hidden>* incomplete — not enough listed on this datacenter to cover the full amount</div>
     </div>
     <details id="specialSection" class="special">
       <summary>Special-source materials <span id="specialSummary" class="muted"></span></summary>
@@ -72,7 +125,10 @@
         often supply these themselves, which is why they are tallied separately per crafted item.</p>
     </details>
 
-    <p class="hint">Prices are the cheapest active listing on the selected datacenter (Universalis). Precrafts are expanded recursively; the material total counts only <em>base</em> materials (leaf nodes).</p>
+    <p class="hint">Prices walk the market board listings cheapest-first until the required quantity is
+      covered, on the selected datacenter (Universalis). Materials are priced HQ where enough HQ is
+      listed, otherwise NQ. Precrafts are expanded recursively; the material total counts only
+      <em>base</em> materials (leaf nodes).</p>
   </section>
 
   <!-- ============ QUOTE SIDE ============ -->
@@ -121,6 +177,40 @@
   </section>
 </main>
 
+<noscript>
+  <p class="noscript-note">This crafting quote calculator needs JavaScript: it queries XIVAPI for
+    recipes and Universalis for market board prices directly from your browser.</p>
+</noscript>
+
+<section class="about">
+  <h2>About the FFXIV Crafting Quote Builder</h2>
+  <p>A free, browser-based crafting quote calculator for FINAL FANTASY XIV. Search any item, and the
+    tool pulls its recipe from XIVAPI and expands every precraft down to base materials, scaling
+    quantities by the recipe yield. Each material is then priced against live market board data from
+    Universalis on the datacenter you choose.</p>
+
+  <h3>What it does</h3>
+  <ul>
+    <li><strong>Recipe and precraft trees</strong> — recursive expansion with correct amounts per craft run.</li>
+    <li><strong>Quantity-aware market prices</strong> — listings are taken cheapest-first until the amount
+      you need is covered, so a cheap single-unit listing never misrepresents the cost of a bulk order.</li>
+    <li><strong>HQ and NQ</strong> — materials are quoted HQ when enough HQ is listed and fall back to NQ
+      otherwise; the finished craft can be switched between HQ and NQ.</li>
+    <li><strong>Buy vs. craft comparison</strong> — the cost of buying the finished items outright next to
+      the cheapest material cost of crafting them yourself.</li>
+    <li><strong>Special-source materials</strong> — a separate tally of everything that cannot be gathered,
+      crafted or bought from a gil vendor, such as Allagan tomestone and crafters' scrip purchases,
+      aetherial reduction products and drops, so a customer knows what they can supply themselves.</li>
+    <li><strong>Quote sheet</strong> — positions with description, quantity and unit price, exported as a
+      PNG image you can post in game or on Discord.</li>
+  </ul>
+
+  <h3>Who it is for</h3>
+  <p>Crafters who take commissions and want a defensible price: raid consumables, gear sets, housing
+    items or glamour pieces. Everything runs client-side in your browser, nothing is uploaded, and
+    saved setups stay in your own browser storage.</p>
+</section>
+
 <footer class="sitefoot">
   <span>FFXIV Crafting Quote Builder — © 2026 WitchOfFrost,
     <a href="LICENSE">MIT licensed</a>.</span>
@@ -134,6 +224,7 @@
 <!-- classic scripts, loaded in dependency order (works from file:// too) -->
 <script src="js/core.js"></script>
 <script src="js/api.js"></script>
+<script src="js/pricing.js"></script>
 <script src="js/craftlist.js"></script>
 <script src="js/quote.js"></script>
 <script src="js/storage.js"></script>

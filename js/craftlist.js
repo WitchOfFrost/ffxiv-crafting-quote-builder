@@ -63,6 +63,7 @@ async function refreshPrices() {
   const missing = [...ids].filter(id => !state.prices.has(id));
   await Promise.all([
     missing.length ? fetchPrices(missing) : null,
+    fetchHqFlags([...ids]),
     refreshSources(),
   ]);
 }
@@ -70,14 +71,14 @@ async function refreshPrices() {
 /** Cost of the leaves only — the materials you would actually have to buy. */
 function leafCost(node) {
   if (node.children.length) return node.children.reduce((s, c) => s + leafCost(c), 0);
-  const p = state.prices.get(node.id);
-  return p ? p.price * node.qty : 0;
+  const c = costFor(node.id, node.qty, 'auto');
+  return c ? c.total : 0;
 }
 
-/** Cost of simply buying the finished top-level items off the market board. */
-function buyoutCost(node) {
-  const p = state.prices.get(node.id);
-  return p ? p.price * node.qty : 0;
+/** Cost of buying a finished top-level item outright, at its chosen quality. */
+function buyoutCost(root) {
+  const c = costFor(root.tree.id, root.qty, rootMode(root));
+  return c ? c.total : 0;
 }
 
 /* ---------------- special-source materials ---------------- */
@@ -115,9 +116,12 @@ function tallySpecial(node, into = new Map()) {
   return into;
 }
 
-/** True when some node in the tree has no listing, so a total is understated. */
+/** True when a total is understated — no listings at all, or not enough of them. */
 function hasMissingPrice(node) {
-  if (!node.children.length) return !state.prices.get(node.id);
+  if (!node.children.length) {
+    const c = costFor(node.id, node.qty, 'auto');
+    return !c || c.short;
+  }
   return node.children.some(hasMissingPrice);
 }
 
@@ -172,17 +176,36 @@ function nodeEl(node, isRoot, onRemove, rootUid) {
     row.appendChild(qty);
   }
 
+  // roots are priced at the quality they are quoted at, materials prefer HQ
+  const root = isRoot ? state.roots.find(r => r.uid === rootUid) : null;
+  const cost = costFor(node.id, node.qty, root ? rootMode(root) : 'auto');
+
   const price = document.createElement('span');
-  const p = state.prices.get(node.id);
-  if (p) {
+  if (cost && cost.filled) {
     price.className = 'price';
-    price.innerHTML = `${gil(p.price * node.qty)} <small>gil</small>`
-      + (p.world ? `<br><small>${gil(p.price)} ea · ${p.world}${p.hq ? ' HQ' : ''}</small>` : '');
+    const q = cost.quality ? `<em class="q ${cost.quality.toLowerCase()}">${cost.quality}</em> ` : '';
+    const short = cost.short
+      ? `<br><small class="warn">only ${cost.filled} of ${cost.needed} listed</small>`
+      : `<br><small>${costDetail(cost)}</small>`;
+    price.innerHTML = `${q}${gil(cost.total)} <small>gil</small>${short}`;
   } else {
     price.className = 'price none';
-    price.innerHTML = '<small>no listing</small>';
+    price.innerHTML = cost ? '<small>none listed</small>' : '<small>no listing</small>';
   }
   row.appendChild(price);
+
+  if (isRoot && canBeHq(node.id)) {
+    const toggle = document.createElement('button');
+    toggle.className = 'hq-toggle' + (root.hq ? ' on' : '');
+    toggle.textContent = root.hq ? 'HQ' : 'NQ';
+    toggle.title = 'Quote this craft as ' + (root.hq ? 'NQ' : 'HQ');
+    toggle.addEventListener('click', () => {
+      root.hq = !root.hq;
+      renderCraftList();     // both qualities are already loaded — no refetch
+      saveSession();
+    });
+    row.appendChild(toggle);
+  }
 
   if (isRoot) {
     const rm = document.createElement('button');
@@ -252,9 +275,12 @@ function renderCraftList() {
     }, root.uid));
   });
 
-  const buyout = state.roots.reduce((s, r) => s + buyoutCost(r.tree), 0);
+  const buyout = state.roots.reduce((s, r) => s + buyoutCost(r), 0);
   const materials = state.roots.reduce((s, r) => s + leafCost(r.tree), 0);
-  const buyoutPartial = state.roots.some(r => !state.prices.get(r.tree.id));
+  const buyoutPartial = state.roots.some(r => {
+    const c = costFor(r.tree.id, r.qty, rootMode(r));
+    return !c || c.short;
+  });
   const matPartial = state.roots.some(r => hasMissingPrice(r.tree));
 
   $('#refBuyTotal').textContent = gil(buyout) + ' gil' + (buyoutPartial ? '*' : '');
@@ -287,8 +313,11 @@ function specialRow(entry, indent) {
 
   const price = document.createElement('span');
   price.className = 'sp-price';
-  const p = state.prices.get(entry.id);
-  price.innerHTML = p ? `${gil(p.price * entry.qty)} <small>gil</small>` : '<small>no listing</small>';
+  const cost = costFor(entry.id, entry.qty, 'auto');
+  price.innerHTML = cost && cost.filled
+    ? `${cost.quality ? `<em class="q ${cost.quality.toLowerCase()}">${cost.quality}</em> ` : ''}${gil(cost.total)} <small>gil</small>`
+      + (cost.short ? ` <small class="warn">(${cost.filled}/${cost.needed})</small>` : '')
+    : '<small>no listing</small>';
 
   row.append(img, name, qty, price);
   return row;

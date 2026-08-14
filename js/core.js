@@ -5,11 +5,12 @@ const XIVAPI = 'https://v2.xivapi.com/api';
 const UNIVERSALIS = 'https://universalis.app/api/v2';
 const MAX_DEPTH = 5;        // how deep precrafts get expanded
 const PRICE_CHUNK = 100;    // Universalis accepts 100 item ids per request
+const LISTING_DEPTH = 40;   // listings pulled per item, enough to cover a stack run
 
 const state = {
   dc: localStorage.getItem('cqb.dc') || 'Chaos',
-  roots: [],                 // [{uid, item, qty, tree}]  — the craft list
-  prices: new Map(),         // itemId -> {price, world, hq} | null
+  roots: [],                 // [{uid, item, qty, hq, tree}]  — the craft list
+  prices: new Map(),         // itemId -> {listings:[{ppu,qty,hq,world}]} | null
   quote: [],                 // [{desc, price}]            — the quote table
 };
 
